@@ -12,6 +12,8 @@ import Ingresos from "./components/Ingresos";
 import Proveedores from "./components/Proveedores";
 import Clientes from "./components/Clientes";
 import Usuarios from "./components/Usuarios";
+import Permisos from "./components/Permisos";
+import Modulos from "./components/Modulos";
 import Configuracion from "./components/Configuracion";
 import PrivateRoute from "./components/PrivateRoute";
 import Loader from "./components/Loader";
@@ -45,6 +47,8 @@ function App() {
           <Route path="clientes" element={<PrivateRoute><Clientes /></PrivateRoute>} /> 
           <Route path="usuarios" element={<PrivateRoute><Usuarios /></PrivateRoute>} /> 
           <Route path="accesos" element={<PrivateRoute><Accesos /></PrivateRoute>} /> 
+          <Route path="permisos" element={<PrivateRoute><Permisos /></PrivateRoute>} /> 
+          <Route path="modulos" element={<PrivateRoute><Modulos /></PrivateRoute>} /> 
 
         </Route>
         <Route path="*" element={<NotFound />} />

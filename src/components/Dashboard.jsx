@@ -17,7 +17,8 @@ import {
   FiUsers,
   FiUserX,
   FiUserPlus,
-  //FiShieldOff,
+  FiShieldOff,
+  FiShare2,
 } from "react-icons/fi";
 
 const Dashboard = () => {
@@ -189,6 +190,22 @@ const Dashboard = () => {
                     Accesos
                   </span>
                 </Link>
+
+                 <Link
+                  to="permisos"
+                  onClick={() => {
+                    setSidebarOpen(false);
+                    setInventarioOpen(false);
+                    setIngresoOpen(false);
+                  }}
+                  className="block p-2 rounded hover:bg-blue-50 text-sm text-gray-700"
+                >
+                  <span className="flex items-center gap-3">
+                    <FiShieldOff />
+                    Permisos
+                  </span>
+                </Link>
+
               </div>
             )}
           </div>
@@ -224,6 +241,15 @@ const Dashboard = () => {
             className="flex items-center gap-3 p-2 rounded hover:bg-blue-100 text-gray-700"
           >
             <FiSettings /> Configuración
+          </Link>
+
+
+          <Link
+            to="modulos"
+            onClick={() => setSidebarOpen(false)}
+            className="flex items-center gap-3 p-2 rounded hover:bg-blue-100 text-gray-700"
+          >
+            <FiShare2 /> Modulos
           </Link>
 
           <button
