@@ -12,3 +12,13 @@ export const listModulos = async () => {
         showAlertError("Error inesperado", "Ocurrió un problema, intenta más tarde.");
     }
 };
+
+// listando modulos lazy
+export const listModulosLazy = async (page, limit, buscar) => {
+    try {
+        const response = await axiosInstance.get(`/${modulos}//lazy/${page}/${limit}/${buscar}`);
+        return response.data;
+    } catch (error) {
+        showAlertError("Error inesperado", "Ocurrió un problema, intenta más tarde.");
+    }
+};

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import ReactSelect from "react-select";
-import { listProductos, createProductos, updateProducto } from "../api/productos";
+import { createProductos, updateProducto, listProductosLazy } from "../api/productos";
 import { listCategorias } from "../api/categorias";
 import { 
           listUnidadMedida014, 
@@ -21,6 +21,12 @@ const Productos = () => {
   const [editMode, setEditMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [buscar, setBuscar] = useState("");
+
   const [form, setForm] = useState({
     nombre: "",
     descripcion: "",
@@ -35,20 +41,27 @@ const Productos = () => {
     tipoItem: "",
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
+
+   const fetchData = async (p = 1) => {
       try {
-        const res = await listProductos({});
-        setProductos(res.data);
+        const data = await listProductosLazy(p, limit, buscar);
+        setProductos(data.data);
+        setTotalPages(data.totalPages);
+        setPage(data.currentPage);
+
       } catch (error) {
         console.error("Error al obtener productos", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
-  }, []);
 
+
+  useEffect(() => {
+    fetchData(page);
+     // eslint-disable-next-line 
+  }, [page, limit, buscar]);
+  
   useEffect(() => {
     if (showModal) {
 
@@ -126,8 +139,9 @@ const Productos = () => {
       }
 
       setShowModal(false);
-      const updated = await listProductos({});
-      setProductos(updated.data);
+     const updated = await fetchData(page);
+     setProductos(updated.data);
+     
     } catch (error) {
       console.error("Error al guardar el producto", error);
     } finally {
@@ -152,10 +166,8 @@ const Productos = () => {
 
   const opcionesTributo = tributo.map((t) => ({
     value: t.id.toString(),
-    label: `${t.id} | ${t.name}`,
+    label: `${t.codigo} | ${t.name}`,
   }));
-
-  if (loading) return <Loader />;
 
   return (
     <div className="p-4">
@@ -182,7 +194,40 @@ const Productos = () => {
         </button>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Filtros */}
+      <div className="flex flex-wrap items-center gap-4 mb-4">
+        <input
+          type="text"
+          placeholder="Buscar producto..."
+          value={buscar}
+          onChange={(e) => setBuscar(e.target.value)}
+          className="border rounded px-3 py-1 w-64"
+        />
+        <select
+          value={limit}
+          onChange={(e) => {
+            setLimit(Number(e.target.value));
+            setPage(1);
+          }}
+          className="border rounded px-3 py-1"
+        >
+          {[10, 15, 25, 50, 100, 250, 500, 1000].map((num) => (
+            <option key={num} value={num}>
+              {num} por página
+            </option>
+          ))}
+        </select>
+      </div>
+
+
+      <div className="overflow-x-auto relative">
+
+         {/* Tabla de categorías con animación de carga */}
+        {loading && (
+          <div className="absolute inset-0 bg-white/70 flex justify-center items-center z-10">
+            <Loader />
+          </div>
+        )}
         <table className="min-w-full border border-gray-300 text-sm md:text-base">
           <thead className="bg-gray-800 text-white">
             <tr>
@@ -226,6 +271,49 @@ const Productos = () => {
           </tbody>
         </table>
       </div>
+
+
+ {/* Paginación */}
+      <div className="flex justify-center mt-4 gap-2">
+        <button
+          disabled={page === 1}
+          onClick={() => fetchData(page - 1)}
+          className={`px-3 py-1 border rounded ${
+            page === 1
+              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+              : "bg-white hover:bg-gray-100"
+          }`}
+        >
+          Anterior
+        </button>
+
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+          <button
+            key={num}
+            onClick={() => fetchData(num)}
+            className={`px-3 py-1 border rounded ${
+              page === num
+                ? "bg-blue-500 text-white"
+                : "bg-white hover:bg-gray-100"
+            }`}
+          >
+            {num}
+          </button>
+        ))}
+
+        <button
+          disabled={page === totalPages}
+          onClick={() => fetchData(page + 1)}
+          className={`px-3 py-1 border rounded ${
+            page === totalPages
+              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+              : "bg-white hover:bg-gray-100"
+          }`}
+        >
+          Siguiente
+        </button>
+      </div>
+
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">

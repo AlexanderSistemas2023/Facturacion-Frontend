@@ -13,6 +13,16 @@ export const listCategorias = async (data) => {
     }
 };
 
+// listando categorias de los productos
+export const listCategoriasLazy = async ( page, limit, buscar) => {
+    try {
+        const response = await axiosInstance.get(`/${categorias}/lazy/${page}/${limit}/${buscar}`);
+        return response.data;
+    } catch (error) {
+        showAlertError("Error inesperado", "Ocurrió un problema, intenta más tarde.");
+    }
+};
+
 // Crear nueva categoría
 export const createCategorias = async ( data) => {
     try {

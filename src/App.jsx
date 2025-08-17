@@ -17,6 +17,7 @@ import Modulos from "./components/Modulos";
 import Configuracion from "./components/Configuracion";
 import PrivateRoute from "./components/PrivateRoute";
 import Loader from "./components/Loader";
+import Registro from "./components/Registro";
 import NotFound from "./components/NotFound";
 
 function App() {
@@ -28,6 +29,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Login setIsLoading={setIsLoading} />} />
 
+         <Route path="registro" element={<Registro />} /> 
+        
         <Route
           path="/dashboard"
           element={

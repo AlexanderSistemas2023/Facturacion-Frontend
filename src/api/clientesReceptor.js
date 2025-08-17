@@ -13,6 +13,18 @@ export const listClienteReceptor = async () => {
   }
 };
 
+
+// obteniendo los datos del negocio lazy
+export const listClientLazy = async (page, limit, buscar) => {
+  try {
+    const response = await axiosInstance.get(`/${clienteReceptor}/lazy/${page}/${limit}/${buscar}`);
+    return response.data;
+  } catch (error) {
+    showAlertError("Error inesperado", "Ocurrió un problema, intenta más tarde.");
+  }
+};
+
+
 // Actualizar cliente receptor
 export const createClienteReceptor = async ( data) => {
     try {

@@ -2,47 +2,45 @@ import { useEffect, useState } from "react";
 import ReactSelect from "react-select";
 import {
   listActividadEconomica19,
- /*
-  listDepartamento012,
-  listMunicipio013,
-  listTipoEstablecimiento009,
-*/
   listAmbiente001
 } from "../api/hacienda";
-import { listClientData } from "../api/clientes";
-// import { listSucursales } from "../api/sucursales";
+import { 
+  listClientData,
+  updateCliente 
+} from "../api/clientes";
 import Loader from "../components/Loader";
 
 const Configuracion = () => {
   const [loading, setLoading] = useState(true);
   const [actividad, setActividadEconomica] = useState([]);
-//  const [departamentos, setDepartamentos] = useState([]);
-//  const [municipios, setMunicipios] = useState([]);
-//  const [establecimiento, setEstablecimientos] = useState([]);
   const [cliente, setCliente] = useState(null);
   const [ambiente, setAmbiente] = useState(null);
-  const [form, setForm] = useState({});
-//  const [sucursalesEdit, setSucursales] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [form, setForm] = useState({
+       id_actividadEconomicaFacts : "",
+       name: "",
+       nombreComercial: "",
+       direccion: "",
+       nit: "",
+       nrc: "",
+       company: "",
+       website: "",
+       ambiente: "",
+       urlFirmador: "",
+       authPassword: "",
+       privatePassword: "",
+       phone: "", 
+       correoEnvio: "", 
+       OAuth2: "",
+  });
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const act = await listActividadEconomica19({});
         setActividadEconomica(act.data);
-
-        /*
-        const dep = await listDepartamento012({});
-        setDepartamentos(dep.data);
-
-        const mun = await listMunicipio013({});
-        setMunicipios(mun.data);
-
-        const suc = await listSucursales({});
-        setSucursales(suc.data);
-
-        const est = await listTipoEstablecimiento009({});
-        setEstablecimientos(est.data);
-        */
 
         const amb = await listAmbiente001({});
         setAmbiente(amb.data);
@@ -72,7 +70,6 @@ const Configuracion = () => {
     }));
   };
 
-
    const handleAmbienteChange = (selected) => {
     setForm((prev) => ({
       ...prev,
@@ -80,19 +77,36 @@ const Configuracion = () => {
     }));
   };
 
-
-/*
-  const handleSucursalChange = (index, field, value) => {
-    const updated = [...sucursalesEdit];
-    updated[index][field] = value;
-    setSucursales(updated);
-  };
-*/
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Formulario actualizado:", form);
-  };
+  const handleSubmit = async (e) => {
+      setSubmitting(true);
+      e.preventDefault();
+      try {
+        const data = {
+       id_actividadEconomicaFacts : form.id_actividadEconomicaFacts,
+       name: form.name,
+       nombreComercial: form.nombreComercial,
+       direccion: form.direccion,
+       nit: form.nit,
+       nrc: form.nrc,
+       company: form.company,
+       website: form.website,
+       ambiente: form.ambiente,
+       urlFirmador: form.urlFirmador,
+       authPassword: form.authPassword,
+       privatePassword: form.privatePassword,
+       phone: form.phone, 
+       correoEnvio: form.correoEnvio, 
+       OAuth2: form.OAuth2,
+        };
+  
+          await updateCliente(data);
+  
+      } catch (error) {
+        console.error("Error al guardar el producto", error);
+      } finally {
+        setSubmitting(false);
+      }
+    };
 
   if (loading || !cliente) return <Loader />;
 
@@ -107,24 +121,6 @@ const Configuracion = () => {
     value: am.id,
     label: `${am.codigo} | ${am.name}`,
   }));
-
-/*
-
- const opcionesDepartamentos = departamentos.map((d) => ({
-    value: d.id,
-    label: `${d.codigo} | ${d.name}`,
-  }));
-
-  const opcionesMunicipios = municipios.map((m) => ({
-    value: m.id,
-    label: `${m.codigo} | ${m.name}`,
-  }));
-
-  const opcionesEstablecimiento = establecimiento.map((es) => ({
-    value: es.id,
-    label: `${es.codigo} | ${es.name}`,
-  }));
-  */
 
 
   const selectedActividad = opcionesActividades.find(
@@ -188,7 +184,6 @@ const Configuracion = () => {
         <div className="grid grid-cols-3 gap-4">
           {[
             { label: "Correo Envío", name: "correoEnvio" },
-            { label: "OAuth2", name: "OAuth2" },
           ].map(({ label, name }) => (
             <div key={name}>
               <label className="block mb-1 font-medium">{label}</label>
@@ -201,6 +196,17 @@ const Configuracion = () => {
               />
             </div>
           ))}
+
+            <div>
+              <label className="block mb-1 font-medium">OAuth2</label>
+              <input
+                type="password"
+                name="OAuth2"
+                value={form.OAuth2}
+                onChange={handleInputChange}
+                className="w-full border rounded px-3 py-2"
+              />
+            </div>
         </div>
       </section>
 
@@ -223,9 +229,7 @@ const Configuracion = () => {
 
           {[
             { label: "URL Firmador", name: "urlFirmador" },
-            { label: "Password Firmador", name: "authPassword"},
             { label: "Token Diario", name: "token_diario" },
-            { label: "Password Token", name: "privatePassword"},
           ].map(({ label, name }) => (
             <div key={name}>
               <label className="block mb-1 font-medium">{label}</label>
@@ -238,17 +242,49 @@ const Configuracion = () => {
               />
             </div>
           ))}
+
+           <div>
+              <label className="block mb-1 font-medium">Password Firmador</label>
+              <input
+                type="password"
+                name="authPassword"
+                value={form.authPassword}
+                onChange={handleInputChange}
+                className="w-full border rounded px-3 py-2"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium">Password Token</label>
+              <input
+                type="password"
+                name="privatePassword"
+                value={form.privatePassword}
+                onChange={handleInputChange}
+                className="w-full border rounded px-3 py-2"
+              />
+            </div>
         </div>
       </section>
 
       {/* Botón de guardar */}
       <div className="text-right">
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-        >
-          Actualizar configuración
-        </button>
+       <button
+                  type="submit"
+                  disabled={submitting}
+                  className={`px-4 py-2 rounded flex items-center justify-center gap-2 ${
+                    submitting
+                      ? "bg-blue-400 cursor-not-allowed"
+                      : "bg-green-600 hover:bg-green-700"
+                  } text-white`}
+                >
+                  {submitting && (
+                    <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  )}
+                  {submitting
+                    ? "Actualizando..."
+                    : "Actualizar"}
+                </button>
       </div>
     </form>
   );

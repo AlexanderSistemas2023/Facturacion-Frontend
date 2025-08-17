@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import EstadoBadge from "../components/EstadoBadge";
 import Loader from "../components/Loader";
 import {
-  listCategorias,
+  listCategoriasLazy,
   updateCategorias,
   createCategorias,
   changeCategorias,
@@ -16,17 +16,25 @@ const Categorias = () => {
   const [editMode, setEditMode] = useState(false);
   const [currentId, setCurrentId] = useState(null);
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [buscar, setBuscar] = useState("");
+
   const [form, setForm] = useState({
     name: "",
     description: "",
     status: "",
   });
 
-  // Obtener categorías
-  const fetchCategorias = async () => {
+  // Obtener categorías con paginación
+  const fetchData = async (p = 1) => {
     try {
-      const data = await listCategorias({});
+      setLoading(true);
+      const data = await listCategoriasLazy(p, limit, buscar);
       setCategorias(data.data);
+      setTotalPages(data.totalPages);
+      setPage(data.currentPage);
     } catch (error) {
       console.error("Error al obtener las categorías", error);
     } finally {
@@ -34,9 +42,12 @@ const Categorias = () => {
     }
   };
 
+
   useEffect(() => {
-    fetchCategorias();
-  }, []);
+    fetchData(page);
+     // eslint-disable-next-line 
+  }, [page, limit, buscar]);
+  
 
   // Manejar cambios de campos del formulario
   const handleChange = (e) => {
@@ -81,7 +92,7 @@ const Categorias = () => {
         await createCategorias(data);
       }
 
-      await fetchCategorias();
+      await fetchData(page);
       setShowModal(false);
     } catch (error) {
       console.error("Error al guardar la categoría", error);
@@ -95,13 +106,11 @@ const Categorias = () => {
     const newStatus = categoria.status === 1 ? 0 : 1;
     try {
       await changeCategorias(categoria.id, { status: newStatus });
-      await fetchCategorias();
+      await fetchData(page);
     } catch (error) {
       console.error("Error al cambiar el estado de la categoría", error);
     }
   };
-
-  if (loading) return <Loader />;
 
   return (
     <div className="p-4">
@@ -116,8 +125,38 @@ const Categorias = () => {
         </button>
       </div>
 
-      {/* Tabla de categorías */}
-      <div className="overflow-x-auto">
+      {/* Filtros */}
+      <div className="flex flex-wrap items-center gap-4 mb-4">
+        <input
+          type="text"
+          placeholder="Buscar categoría..."
+          value={buscar}
+          onChange={(e) => setBuscar(e.target.value)}
+          className="border rounded px-3 py-1 w-64"
+        />
+        <select
+          value={limit}
+          onChange={(e) => {
+            setLimit(Number(e.target.value));
+            setPage(1);
+          }}
+          className="border rounded px-3 py-1"
+        >
+          {[10, 15, 25, 50, 100, 250, 500, 1000].map((num) => (
+            <option key={num} value={num}>
+              {num} por página
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Tabla de categorías con animación de carga */}
+      <div className="overflow-x-auto relative">
+        {loading && (
+          <div className="absolute inset-0 bg-white/70 flex justify-center items-center z-10">
+            <Loader />
+          </div>
+        )}
         <table className="min-w-full border border-gray-300 text-sm md:text-base">
           <thead className="bg-gray-800 text-white">
             <tr>
@@ -149,7 +188,6 @@ const Categorias = () => {
                     >
                       Editar
                     </button>
-
                     {categoria.status === 1 ? (
                       <button
                         type="button"
@@ -173,6 +211,47 @@ const Categorias = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Paginación */}
+      <div className="flex justify-center mt-4 gap-2">
+        <button
+          disabled={page === 1}
+          onClick={() => fetchData(page - 1)}
+          className={`px-3 py-1 border rounded ${
+            page === 1
+              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+              : "bg-white hover:bg-gray-100"
+          }`}
+        >
+          Anterior
+        </button>
+
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+          <button
+            key={num}
+            onClick={() => fetchData(num)}
+            className={`px-3 py-1 border rounded ${
+              page === num
+                ? "bg-blue-500 text-white"
+                : "bg-white hover:bg-gray-100"
+            }`}
+          >
+            {num}
+          </button>
+        ))}
+
+        <button
+          disabled={page === totalPages}
+          onClick={() => fetchData(page + 1)}
+          className={`px-3 py-1 border rounded ${
+            page === totalPages
+              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+              : "bg-white hover:bg-gray-100"
+          }`}
+        >
+          Siguiente
+        </button>
       </div>
 
       {/* Modal */}

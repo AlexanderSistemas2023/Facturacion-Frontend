@@ -4,9 +4,19 @@ import axiosInstance from "./axiosInstance";
 const usuarios = 'usuarios';
 
 // listando usuarios
-export const listUsuarios = async (data) => {
+export const listUsuarios = async () => {
     try {
-        const response = await axiosInstance.get(`/${usuarios}/list`, { params: data });
+        const response = await axiosInstance.get(`/${usuarios}/list`);
+        return response.data;
+    } catch (error) {
+        showAlertError("Error inesperado", "Ocurrió un problema, intenta más tarde.");
+    }
+};
+
+// listando usuarios
+export const listUsuariosLazy = async (page, limit, buscar) => {
+    try {
+        const response = await axiosInstance.get(`/${usuarios}/lazy/${page}/${limit}/${buscar}`);
         return response.data;
     } catch (error) {
         showAlertError("Error inesperado", "Ocurrió un problema, intenta más tarde.");

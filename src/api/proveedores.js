@@ -13,6 +13,17 @@ export const listProveedor = async () => {
   }
 };
 
+
+// Listando los proveedores lazy
+export const listProveedorLazy = async (page, limit, buscar) => {
+  try {
+    const response = await axiosInstance.get(`/${provider}/lazy/${page}/${limit}/${buscar}`);
+    return response.data;
+  } catch (error) {
+    showAlertError("Error inesperado", "Ocurrió un problema, intenta más tarde.");
+  }
+};
+
 // Crear proveedor
 export const createProveedor = async ( data) => {
     try {

@@ -15,6 +15,18 @@ export const listAmbiente001 = async () => {
 };
 
 
+// listando tipo de documento
+export const listTipoDocumento002 = async () => {
+  try {
+    const response = await axiosInstance.get(`/${catalogo}/dte_tipo_documento`);
+    return response.data;
+  } catch (error) {
+    console.error("Error en listar tipo de documentos:", error);
+    showAlertError("Error inesperado", "Ocurrió un problema, intenta más tarde.");
+  }
+};
+
+
 // listando los tipos de establecimientos
 export const listTipoEstablecimiento009 = async () => {
   try {

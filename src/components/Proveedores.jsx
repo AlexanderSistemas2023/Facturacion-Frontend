@@ -3,7 +3,7 @@ import ReactSelect from "react-select";
 import EstadoBadge from "../components/EstadoBadge";
 import Loader from "../components/Loader";
 import {
-  listProveedor,
+  listProveedorLazy,
   updateProveedor,
   createProveedor,
   changeProveedor,
@@ -26,6 +26,11 @@ const Proveedores = () => {
   const [editMode, setEditMode] = useState(false);
   const [currentId, setCurrentId] = useState(null);
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [buscar, setBuscar] = useState("");
+
   const [form, setForm] = useState({
     name: "",
     nombre_comercial: "",
@@ -41,9 +46,9 @@ const Proveedores = () => {
     status: "",
   });
 
-  const fetchProveedor = async () => {
+  const fetchData = async (p = 1) => {
     try {
-      const data = await listProveedor({});
+      const data = await listProveedorLazy(p, limit, buscar);
       setproveedores(data.data);
 
       const dep = await listDepartamento012({});
@@ -54,6 +59,9 @@ const Proveedores = () => {
 
       const act = await listActividadEconomica19({});
       setActividadEconomica(act.data);
+
+      setTotalPages(data.totalPages);
+
     } catch (error) {
       console.error("Error al obtener las categorías", error);
     } finally {
@@ -61,9 +69,10 @@ const Proveedores = () => {
     }
   };
 
-  useEffect(() => {
-    fetchProveedor();
-  }, []);
+    useEffect(() => {
+    fetchData(page);
+     // eslint-disable-next-line 
+  }, [page, limit, buscar]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -135,7 +144,7 @@ const Proveedores = () => {
         await createProveedor(data);
       }
 
-      await fetchProveedor();
+      await fetchData();
       setShowModal(false);
     } catch (error) {
       console.error("Error al guardar el proveedor", error);
@@ -148,7 +157,7 @@ const Proveedores = () => {
     const newStatus = c.status === 1 ? 0 : 1;
     try {
       await changeProveedor(c.id, { status: newStatus });
-      await fetchProveedor();
+      await fetchData();
     } catch (error) {
       console.error("Error al cambiar el estado del proveedor", error);
     }
@@ -187,6 +196,32 @@ const Proveedores = () => {
           Agregar Proveedor
         </button>
       </div>
+
+        {/* Filtros */}
+      <div className="flex flex-wrap items-center gap-4 mb-4">
+        <input
+          type="text"
+          placeholder="Buscar proveedor..."
+          value={buscar}
+          onChange={(e) => setBuscar(e.target.value)}
+          className="border rounded px-3 py-1 w-64"
+        />
+        <select
+          value={limit}
+          onChange={(e) => {
+            setLimit(Number(e.target.value));
+            setPage(1);
+          }}
+          className="border rounded px-3 py-1"
+        >
+          {[10, 15, 25, 50, 100, 250, 500, 1000].map((num) => (
+            <option key={num} value={num}>
+              {num} por página
+            </option>
+          ))}
+        </select>
+      </div>
+
 
       {/* Tabla de clientes */}
       <div className="overflow-x-auto">
@@ -260,6 +295,52 @@ const Proveedores = () => {
           </tbody>
         </table>
       </div>
+
+
+
+{/* Paginación */}
+      <div className="flex justify-center mt-4 gap-2">
+        <button
+          disabled={page === 1}
+          onClick={() => fetchData(page - 1)}
+          className={`px-3 py-1 border rounded ${
+            page === 1
+              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+              : "bg-white hover:bg-gray-100"
+          }`}
+        >
+          Anterior
+        </button>
+
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+          <button
+            key={num}
+            onClick={() => fetchData(num)}
+            className={`px-3 py-1 border rounded ${
+              page === num
+                ? "bg-blue-500 text-white"
+                : "bg-white hover:bg-gray-100"
+            }`}
+          >
+            {num}
+          </button>
+        ))}
+
+        <button
+          disabled={page === totalPages}
+          onClick={() => fetchData(page + 1)}
+          className={`px-3 py-1 border rounded ${
+            page === totalPages
+              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+              : "bg-white hover:bg-gray-100"
+          }`}
+        >
+          Siguiente
+        </button>
+      </div>
+
+
+
 
       {/* Modal */}
       {showModal && (
