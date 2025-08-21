@@ -220,12 +220,12 @@ const Ingresos = () => {
           <thead className="bg-gray-800 text-white">
             <tr>
               <th className="px-4 py-2 border">Fecha</th>
-              <th className="px-4 py-2 border">Codigo Factura</th>
-              <th className="px-4 py-2 border">Numero Factura</th>
+              <th className="px-4 py-2 border">Proveedor</th>
               <th className="px-4 py-2 border">Tipo de factura</th>
               <th className="px-4 py-2 border">Total Ingreso</th>
-              <th className="px-4 py-2 border">Proveedor</th>
               <th className="px-4 py-2 border">Sucursal</th>
+               <th className="px-4 py-2 border">Codigo Generacion</th>
+              <th className="px-4 py-2 border">Numero Control</th>
               <th className="px-4 py-2 border">Estado</th>
               <th className="px-4 py-2 border">Opción</th>
             </tr>
@@ -237,17 +237,17 @@ const Ingresos = () => {
                 className={index % 2 === 0 ? "bg-white" : "bg-gray-200"}
               >
                 <td className="px-4 py-2 border">{formatDateReadable(ingreso.fecha_ingreso)}</td>
-                <td className="px-4 py-2 border">{ingreso.codigo_factura}</td>
-                <td className="px-4 py-2 border">{ingreso.numero_factura}</td>
+                <td className="px-4 py-2 border">{ingreso.Proveedore?.name}</td>
                 <td className="px-4 py-2 border">
                   {ingreso.TipoDocumento?.codigo} | {ingreso.TipoDocumento?.name}
                 </td>
                 <td className="px-4 py-2 border">{ingreso.total}</td>
-                <td className="px-4 py-2 border">{ingreso.Proveedore?.name}</td>
                 <td className="px-4 py-2 border">
                   {ingreso.Sucursale?.codigo_sucursal} |{" "}
                   {ingreso.Sucursale?.nombre}
                 </td>
+                <td className="px-4 py-2 border">{ingreso.codigo_factura}</td>
+                <td className="px-4 py-2 border">{ingreso.numero_factura}</td>
                 <td className="px-4 py-2 border">
                   <EstadoBadge status={ingreso.status} />
                 </td>
@@ -329,14 +329,14 @@ const Ingresos = () => {
                 onChange={(e) => setFechaIngreso(e.target.value)}
                 className="border rounded px-3 py-1 w-full"
               />
-              <label className="block mt-4 mb-2 font-semibold">Código Factura</label>
+              <label className="block mt-4 mb-2 font-semibold">Codigo Generacion</label>
               <input
                 type="text"
                 value={codigoFactura}
                 onChange={(e) => setCodigoFactura(e.target.value)}
                 className="border rounded px-3 py-1 w-full"
               />
-              <label className="block mt-4 mb-2 font-semibold">Número Factura</label>
+              <label className="block mt-4 mb-2 font-semibold">Número Control</label>
               <input
                 type="text"
                 value={numeroFactura}

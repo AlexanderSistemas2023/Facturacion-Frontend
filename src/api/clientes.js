@@ -13,6 +13,7 @@ export const listClientData = async () => {
   }
 };
 
+
 // actualizando datos del cliente
 export const updateCliente = async (data) => {
   try {

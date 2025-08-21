@@ -1,4 +1,4 @@
-// src/components/EstadoBadge.jsx
+
 const EstadoBadge = ({ status }) => {
   const isActive = String(status) === "1" || String(status).toLowerCase() === "activo";
   return (

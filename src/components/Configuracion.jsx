@@ -235,6 +235,7 @@ const Configuracion = () => {
               <label className="block mb-1 font-medium">{label}</label>
               <input
                 type="text"
+                readOnly
                 name={name}
                 value={form[name] || ""}
                 onChange={handleInputChange}
@@ -243,8 +244,19 @@ const Configuracion = () => {
             </div>
           ))}
 
-           <div>
-              <label className="block mb-1 font-medium">Password Firmador</label>
+            <div>
+              <label className="block mb-1 font-medium">Password Privado</label>
+              <input
+                type="password"
+                name="privatePassword"
+                value={form.privatePassword}
+                onChange={handleInputChange}
+                className="w-full border rounded px-3 py-2"
+              />
+            </div>
+
+             <div>
+              <label className="block mb-1 font-medium">Password Token</label>
               <input
                 type="password"
                 name="authPassword"
@@ -254,16 +266,7 @@ const Configuracion = () => {
               />
             </div>
 
-            <div>
-              <label className="block mb-1 font-medium">Password Token</label>
-              <input
-                type="password"
-                name="privatePassword"
-                value={form.privatePassword}
-                onChange={handleInputChange}
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
+
         </div>
       </section>
 

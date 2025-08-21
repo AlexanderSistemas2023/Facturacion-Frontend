@@ -30,3 +30,16 @@ export const showAlertExito = (title, text) => {
 };
 
 
+export const showConfirmAlert = async (title, html) => {
+  const result = await Swal.fire({
+    title,
+    html,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí",
+    cancelButtonText: "No",
+    reverseButtons: true, 
+  });
+
+  return result.isConfirmed; 
+};
