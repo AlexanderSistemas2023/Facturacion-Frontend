@@ -44,8 +44,6 @@ export const Firmador = async (data) => {
     }
 };
 
-
-
 // Presentando facturacion a hacienda
 export const presentacionHacienda = async (data, dteSerial) => {
     try {
@@ -63,7 +61,6 @@ export const presentacionHacienda = async (data, dteSerial) => {
         showAlertError("Error inesperado", "Ocurrió un problema, intenta más tarde.");
     }
 };
-
 
 // firmado de documentos tributarios
 export const Token = async (data) => {
