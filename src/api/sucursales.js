@@ -22,6 +22,19 @@ export const createSucursales = async (data) => {
  
 };
 
+
+// Crear nueva sucursal desde el formulario de registro
+export const createFormSucursales = async (data) => {
+  try {
+     const response = await axiosInstance.post(`/${sucursales}/createform`, data);
+     return response.data;
+  } catch (error) {
+    
+  }
+};
+
+
+
 // Actualizar sucursal
 export const updateSucursales = async (id,data) => {
   try {

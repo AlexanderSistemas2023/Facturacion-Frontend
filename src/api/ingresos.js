@@ -16,7 +16,7 @@ export const listIngresos = async () => {
 // listando Ingresos lazy
 export const listIngresosLazy = async (page, limit, buscar) => {
     try {
-        const response = await axiosInstance.get(`/${ingresos}/lazy/3/${page}/${limit}/${buscar}`);
+        const response = await axiosInstance.get(`/${ingresos}/lazy/${page}/${limit}/${buscar}`);
         return response.data;
     } catch (error) {
         showAlertError("Error inesperado", "Ocurrió un problema, intenta más tarde.");

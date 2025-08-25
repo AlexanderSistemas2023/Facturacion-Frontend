@@ -8,7 +8,7 @@ import Loader from "../components/Loader";
 
 // conexiones a la API
 //import { AddIngresos } from "../api/ingresos";
-import { listFacturacionesLazy, FacturacionCCF, Firmador, presentacionHacienda  } from "../api/ventas";
+import { listFacturacionesLazy, FacturacionCCF, FacturacionFe , Firmador, presentacionHacienda  } from "../api/ventas";
 import { listTipoDocumento002 } from "../api/hacienda";
 import { listProductosLazy } from "../api/productos";
 import { listClienteReceptor } from "../api/clientesReceptor";
@@ -48,9 +48,33 @@ const Ventas = () => {
   const [tipoDocumento, setTipoDocumento] = useState([]);
   const [form, setForm] = useState({});
 
-  /* --------------------------------------------------------------------------
-     Funciones para construir el JSON de venta (ItemsProducts, tributos, total)
-     -------------------------------------------------------------------------- */
+  const [resumenVenta, setResumenVenta] = useState({ subtotal: 0, impuestos: 0, total: 0 });
+
+  const recalcularResumen = () => {
+  const items = productosSeleccionados.map((p) => {
+    const cantidad = Number(p.cantidad) || 0;
+    const precioUni = Number(p.precio) || 0;
+    const ventaGravada = round2(cantidad * precioUni);
+
+    // calcular tributos (solo IVA por defecto)
+    const tributos = (p.tributos || ["20"]).map(code => calculateTributoValue(code, cantidad, precioUni));
+    const totalTrib = tributos.reduce((a, b) => a + b, 0);
+
+    return { ventaGravada, totalTrib };
+  });
+
+  const subtotal = round2(items.reduce((acc, it) => acc + it.ventaGravada, 0));
+  const impuestos = round2(items.reduce((acc, it) => acc + it.totalTrib, 0));
+  const total = round2(subtotal + impuestos);
+
+  setResumenVenta({ subtotal, impuestos, total });
+};
+
+// Ejecutar recalculo cada vez que cambien productosSeleccionados
+useEffect(() => {
+  recalcularResumen();
+  // eslint-disable-next-line
+}, [productosSeleccionados]);
 
   // Mapa básico de tributos y reglas de cálculo (ajusta si tu backend tiene valores distintos)
   const TAX_MAP = {
@@ -148,12 +172,6 @@ const Ventas = () => {
       });
     });
 
-    const tributosArr = Object.values(tribMap).map(t => ({
-      codigo: t.codigo,
-      descripcion: t.descripcion,
-      valor: fmt(t.valor) // string con 2 decimales
-    }));
-
     const totalTributosNum = round2(Object.values(tribMap).reduce((s, t) => s + (t.valor || 0), 0));
     const totalNum = round2(subtotal + totalTributosNum);
 
@@ -168,7 +186,6 @@ const Ventas = () => {
 
     return {
       typeFacts: String(typeFacts),
-      idSucursal: 3,
       idCliente: Number(idCliente),
       fecha: fechaFacturacion || new Date().toISOString().slice(0,10),
       hora: hora,
@@ -195,9 +212,71 @@ const Ventas = () => {
     };
   }
 
-  /* --------------------------------------------------------------------------
-     FIN funciones de armado del JSON
-     -------------------------------------------------------------------------- */
+
+  function buildVentaJsonFe() {
+  const items = buildItemsProductsFromSelected(); // tu función que obtiene los items
+
+  // Subtotal (suma de ventaGravada)
+  const subtotalNum = items.reduce((acc, it) => acc + (Number(it.ventaGravada) || 0), 0);
+
+  // Agrupar tributos por código y sumar
+  const tribMap = {};
+  items.forEach(it => {
+    it.tributos.forEach(t => {
+      const codigo = String(t.codigo);
+      const valorNum = Number(t.valor) || 0;
+      if (tribMap[codigo]) tribMap[codigo].valor += valorNum;
+      else tribMap[codigo] = { codigo, descripcion: t.descripcion || "", valor: valorNum };
+    });
+  });
+
+  // Total de tributos
+  const totalTributosNum = Object.values(tribMap).reduce((s, t) => s + (t.valor || 0), 0);
+  const totalTributos = round2(totalTributosNum);
+
+  // Total final
+  const totalNum = subtotalNum + totalTributosNum;
+  const total = round2(totalNum);
+
+  // Resolver tipo de documento/código a partir del select
+
+  const idCliente = proveedorSeleccionado ? String(proveedorSeleccionado.value) : "";
+
+  // Hora actual
+  const hora = new Date().toTimeString().split(" ")[0]; // "HH:MM:SS"
+
+  return {
+    typeFacts: String("01"),
+    idCliente: Number(idCliente),
+    fecha: fechaFacturacion || new Date().toISOString().slice(0,10),
+    hora: hora,
+    ItemsProducts: items.map(it => ({
+      numItem: it.numItem,
+      idProducto: it.idProducto,
+      tipoItem: it.tipoItem,
+      numeroDocumento: it.numeroDocumento,
+      codTributo: it.codTributo,
+      descripcion: it.descripcion,
+      cantidad: it.cantidad,
+      uniMedida: it.uniMedida,
+      precioUni: it.precioUni,
+      montoDescu: round2(it.montoDescu || 0),
+      ventaNoSuj: round2(it.ventaNoSuj || 0),
+      ventaExenta: round2(it.ventaExenta || 0),
+      ventaGravada: round2(it.ventaGravada || 0),
+      tributos: it.tributos.map(t => ({
+        codigo: t.codigo,
+        descripcion: t.descripcion,
+        valor: round2(t.valor || 0)
+      })),
+      psv: round2(it.psv || 0),
+      noGravado: round2(it.noGravado || 0)
+    })),
+    impuestos: totalTributos,
+    total: total,
+    tipoFacturacion: 1
+  };
+}
 
   const fetchData = async (p = 1) => {
     try {
@@ -285,8 +364,7 @@ const Ventas = () => {
     label: `${c.codigo} | ${c.name}`,
   }));
 
-  // REEMPLAZAMOS el body de handleProcesarIngreso para generar el JSON y seguir con AddIngresos
-  const handleProcesarIngreso = async () => {
+  const handleProcesarVenta = async () => {
     setSubmitting(true);
     try {
      const ingresoData = {
@@ -305,15 +383,23 @@ const Ventas = () => {
      // validando los datos de envio para proceder al ingreso
      if (DataVentaFCF(ingresoData)){
        // --- Generar el JSON de venta (el que quieres) ---
-       const ventaJson = buildVentaJsonForBackend();
        let dataDTE ;
+       
       try {
         //agregando los datos de la venta 
-         dataDTE = await FacturacionCCF(ventaJson);
-         setShowModal(false);
-         setProductosSeleccionados([]);
+
+         // eslint-disable-next-line 
+        if (tipoFactura == 3) {
+           dataDTE = await FacturacionCCF(buildVentaJsonForBackend());
+        // eslint-disable-next-line 
+        } else if (tipoFactura == 1) {
+           dataDTE = await FacturacionFe(buildVentaJsonFe());
+        }
+           
+        setShowModal(false);
+        setProductosSeleccionados([]);
       } catch (error) {
-        
+         
       }
 
       try {
@@ -324,6 +410,7 @@ const Ventas = () => {
       }
        await fetchData(1);
      }
+
     } catch (error) {
       console.error(error);
     } finally {
@@ -333,9 +420,24 @@ const Ventas = () => {
 
   //funcion para enviar DTE a hacienda
   const PresentarDTE = async (id_dte, dteSerial) => {
-   await presentacionHacienda({id_dte}, dteSerial);
-    await fetchData(1);
+     await presentacionHacienda({id_dte}, dteSerial);
+     await fetchData(1);
   };
+
+
+  // Utilidad para obtener el rango de páginas a mostrar en la paginación (máximo 5)
+  const getPaginationPages = (current, total, max = 5) => {
+    let start = Math.max(1, current - Math.floor(max / 2));
+    let end = start + max - 1;
+    if (end > total) {
+      end = total;
+      start = Math.max(1, end - max + 1);
+    }
+    const pages = [];
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  };
+
 
   return (
     <div className="p-4">
@@ -437,10 +539,12 @@ const Ventas = () => {
                   >
                      Impresion
                    </button>
-
+                
+                 {["3"].includes(String(venta.status)) && (
                   <button className="bg-red-300 px-4 py-1 rounded hover:bg-gray-400 text-sm">
                     Anular
                   </button>
+                     )} 
 
                   {["2"].includes(String(venta.status)) && (
                     <button 
@@ -455,9 +559,9 @@ const Ventas = () => {
           </tbody>
         </table>
       </div>
-
-      {/* Paginación ingresos */}
-      <div className="flex justify-center mt-4 gap-2">
+    
+      {/* Paginación ventas */}
+       <div className="flex justify-center mt-4 gap-2">
         <button
           disabled={page === 1}
           onClick={() => fetchData(page - 1)}
@@ -469,7 +573,22 @@ const Ventas = () => {
         >
           Anterior
         </button>
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+        {getPaginationPages(page, totalPages, 5)[0] > 1 && (
+          <>
+            <button
+              onClick={() => fetchData(1)}
+              className={`px-3 py-1 border rounded ${
+                page === 1 ? "bg-blue-500 text-white" : "bg-white hover:bg-gray-100"
+              }`}
+            >
+              1
+            </button>
+            {getPaginationPages(page, totalPages, 5)[0] > 2 && (
+              <span className="px-2 py-1">...</span>
+            )}
+          </>
+        )}
+        {getPaginationPages(page, totalPages, 5).map((num) => (
           <button
             key={num}
             onClick={() => fetchData(num)}
@@ -480,6 +599,21 @@ const Ventas = () => {
             {num}
           </button>
         ))}
+        {getPaginationPages(page, totalPages, 5).slice(-1)[0] < totalPages && (
+          <>
+            {getPaginationPages(page, totalPages, 5).slice(-1)[0] < totalPages - 1 && (
+              <span className="px-2 py-1">...</span>
+            )}
+            <button
+              onClick={() => fetchData(totalPages)}
+              className={`px-3 py-1 border rounded ${
+                page === totalPages ? "bg-blue-500 text-white" : "bg-white hover:bg-gray-100"
+              }`}
+            >
+              {totalPages}
+            </button>
+          </>
+        )}
         <button
           disabled={page === totalPages}
           onClick={() => fetchData(page + 1)}
@@ -492,6 +626,8 @@ const Ventas = () => {
           Siguiente
         </button>
       </div>
+
+
 
       {/* Modal Principal */}
       {showModal && (
@@ -541,6 +677,7 @@ const Ventas = () => {
                 className="border rounded px-3 py-1 w-full"
                 placeholder="No agregar..."
               />
+
               <div className="flex justify-end gap-2 mt-6">
                 <button
                   onClick={() => setShowModal(false)}
@@ -549,10 +686,9 @@ const Ventas = () => {
                   Cancelar
                 </button>
 
-
                 <button
                   disabled={submitting}
-                  onClick={handleProcesarIngreso}
+                  onClick={handleProcesarVenta}
                   className={`px-4 py-2 rounded flex items-center justify-center gap-2 ${
                     submitting
                       ? "bg-green-400 cursor-not-allowed"
@@ -570,8 +706,6 @@ const Ventas = () => {
                     ? "Actualizar"
                     : "Agregar Venta"}
                 </button>
-
-
               </div>
             </div>
 
@@ -593,6 +727,7 @@ const Ventas = () => {
                       <th className="border px-2 py-1">Producto</th>
                       <th className="border px-2 py-1">Cantidad</th>
                       <th className="border px-2 py-1">Precio</th>
+                       <th className="border px-2 py-1">Total</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -615,6 +750,15 @@ const Ventas = () => {
                             className="w-24 border rounded px-1"
                           />
                         </td>
+
+                         <td className="border px-2 py-1">
+                          <input
+                            type="number"
+                            readOnly
+                            value={prod.precio*prod.cantidad}
+                            className="w-24 border rounded px-1"
+                          />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -622,8 +766,33 @@ const Ventas = () => {
               ) : (
                 <p className="text-gray-500 mt-2">No hay productos seleccionados.</p>
               )}
-            </div>
-          </div>
+
+              <div className="mt-6">
+                <table className="w-full border border-gray-300 text-sm md:text-base">
+                 <thead className="bg-gray-100">
+                  <tr>
+                    <th className="px-4 py-2 border text-left">Concepto</th>
+                    <th className="px-4 py-2 border text-right">Monto</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                     <tr className="bg-white">
+                          <td className="px-4 py-2 border">Subtotal</td>
+                          <td className="px-4 py-2 border text-right">${resumenVenta.subtotal.toFixed(2)}</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                         <td className="px-4 py-2 border">IVA</td>
+                         <td className="px-4 py-2 border text-right">${resumenVenta.impuestos.toFixed(2)}</td>
+                    </tr>
+                    <tr className="bg-white font-bold">
+                          <td className="px-4 py-2 border">Total</td>
+                          <td className="px-4 py-2 border text-right">${resumenVenta.total.toFixed(2)}</td>
+                    </tr>
+                 </tbody>
+               </table>
+             </div>
+           </div>
+          </div> 
         </div>
       )}
 

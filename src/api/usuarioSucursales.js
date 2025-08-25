@@ -14,7 +14,6 @@ export const listAcceso = async () => {
     }
 };
 
-
 // listando acceso de usuario
 export const listUsuariosAcceso = async (id_usuario) => {
     try {

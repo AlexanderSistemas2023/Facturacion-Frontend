@@ -272,10 +272,10 @@ const Dashboard = () => {
         </header>
 
         {/* Main content */}
-        <main className="flex-1 p-4 overflow-auto">
+        <main className="flex-1 p-2 sm:p-4 overflow-auto bg-gray-50">
           {isRootDashboard ? (
             <>
-              <div className="bg-white shadow rounded p-6 text-center">
+              <div className="bg-white shadow rounded-2xl p-4 sm:p-6 text-center">
                 <h2 className="text-2xl font-semibold mb-2 text-blue-600">
                   Bienvenido al Panel de Facturación
                 </h2>
@@ -284,7 +284,7 @@ const Dashboard = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-4 sm:mt-6">
                 {[
                   { title: "Compras", desc: "Gestione sus órdenes de compra, proveedores y recepción de productos." },
                   { title: "Inventario", desc: "Controle el stock en tiempo real, entradas y salidas con precisión." },
@@ -295,7 +295,7 @@ const Dashboard = () => {
                 ].map((modulo, idx) => (
                   <div
                     key={idx}
-                    className="bg-white rounded-2xl shadow-md p-6 hover:shadow-xl transform transition duration-300 hover:scale-105"
+                    className="bg-white rounded-2xl shadow-md p-4 sm:p-6 hover:shadow-xl transform transition duration-300 hover:scale-105"
                   >
                     <h4 className="text-lg font-semibold mb-2 text-green-700">
                       {modulo.title}
@@ -306,7 +306,63 @@ const Dashboard = () => {
               </div>
             </>
           ) : (
-            <Outlet />
+            <div className="w-full overflow-x-auto">
+              {/*
+                Envolver el contenido de las rutas hijas en un div con overflow-x-auto
+                para que las tablas y otros elementos grandes sean responsivos.
+                Además, se agregan clases para mejorar la visualización de tablas.
+              */}
+              <div className="min-w-full">
+                <Outlet />
+              </div>
+              {/* Estilos globales para tablas */}
+              <style>{`
+                table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  background: white;
+                  border-radius: 1rem;
+                  overflow: hidden;
+                  font-size: 0.95rem;
+                }
+                th, td {
+                  padding: 0.75rem 1rem;
+                  border-bottom: 1px solid #e5e7eb;
+                  text-align: left;
+                }
+                th {
+                  background: #f1f5f9;
+                  color: #2563eb;
+                  font-weight: 600;
+                }
+                tr:last-child td {
+                  border-bottom: none;
+                }
+                @media (max-width: 640px) {
+                  table, thead, tbody, th, td, tr {
+                    display: block;
+                  }
+                  thead tr {
+                    display: none;
+                  }
+                  td {
+                    position: relative;
+                    padding-left: 50%;
+                    min-height: 2.5rem;
+                  }
+                  td:before {
+                    position: absolute;
+                    top: 0;
+                    left: 1rem;
+                    width: 45%;
+                    white-space: nowrap;
+                    font-weight: 600;
+                    color: #2563eb;
+                    content: attr(data-label);
+                  }
+                }
+              `}</style>
+            </div>
           )}
         </main>
       </div>

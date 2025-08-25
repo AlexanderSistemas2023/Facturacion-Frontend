@@ -34,6 +34,18 @@ export const createUsuarios = async ( data) => {
     }
 };
 
+// Crear nueva suarios desde el formulario de registro
+export const createUsuariosForm = async ( data) => {
+    try {
+       const response = await axiosInstance.post(`/${usuarios}/createform`, data);
+       showAlertExito("¡Éxito!", "usuario creado exitosamente");
+       return response.data;
+    } catch (error) {
+        showAlertError("Error inesperado", "Ocurrió un problema, intenta más tarde.");
+    }
+};
+
+
 // Actualizar usuario
 export const updateUsuarios = async (id, data) => {
     try {

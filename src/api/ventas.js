@@ -6,7 +6,7 @@ const facturar = 'facturar';
 // listando Facturaciones lazy
 export const listFacturacionesLazy = async (page, limit, buscar) => {
     try {
-        const response = await axiosInstance.get(`/${facturar}/lazy/2/${page}/${limit}/${buscar}`);
+        const response = await axiosInstance.get(`/${facturar}/lazy/${page}/${limit}/${buscar}`);
         return response.data;
     } catch (error) {
         showAlertError("Error inesperado", "Ocurrió un problema, intenta más tarde.");
@@ -17,6 +17,16 @@ export const listFacturacionesLazy = async (page, limit, buscar) => {
 export const FacturacionCCF = async (data) => {
     try {
         const response = await axiosInstance.post(`/${facturar}/ccf`,data);
+        return response.data;
+    } catch (error) {
+        showAlertError("Error inesperado", "Ocurrió un problema, intenta más tarde.");
+    }
+};
+
+// facturacion consumo final
+export const FacturacionFe = async (data) => {
+    try {
+        const response = await axiosInstance.post(`/${facturar}/fe`,data);
         return response.data;
     } catch (error) {
         showAlertError("Error inesperado", "Ocurrió un problema, intenta más tarde.");

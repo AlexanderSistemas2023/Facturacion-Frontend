@@ -24,3 +24,18 @@ export const updateCliente = async (data) => {
     showAlertError("Error inesperado", "Ocurrió un problema, intenta más tarde.");
   }
 };
+
+
+// actualizando datos del cliente
+export const createCliente = async (data) => {
+  try {
+    const response = await axiosInstance.post(`/${clientes}/registro`, data);
+    showAlertExito("¡Éxito!", "Datos del negocio creado exitosamente");
+    return response.data;
+  } catch (error) {
+    showAlertError("Error inesperado", "Ocurrió un problema, intenta más tarde.");
+  }
+};
+
+
+
